@@ -1,0 +1,73 @@
+What is Devops ?
+
+SDLC - Software Development Life Cycle 
+
+	1. Requirements gathering 
+	2. Design- HLD , LD - 1500 sqts - Plan - Constructions 
+	3. Development - SD - Front End , Backend , Middle ware 
+	4. Testing - Functional , Non-Functional - High Quality 
+	5. Deployment - Dev , Test , UAT , Prod 
+Maintaince  - SRE - Monitoring Dashboard - Observability
+
+Method or methodology:
+
+Waterfall , Agile 
+
+Disadvantage:
+
+Liner Sequential Method - Step by Step 
+
+Customer Satisfaction 
+
+Step by Step , Dependency 
+
+UAT - Pre-prod - 1 years 
+
+Add New requirements 
+
+Agile :
+
+Iterative - Sprint , Scrum 
+
+
+E-Commerce : End User Module , Cart , Login , catalogue , Payment , Order - 602 Microserives 
+
+
+Sprint - 1-4 Weeks 
+
+Scrum - 
+
+Dev, Test , UAT , Prod 
+
+Install Platform - 
+Application Dependencies 
+Lib
+Source Code 
+
+Software Development
+
+Analysis 
+Design
+Development 
+Testing 
+
+Tested - Local 
+ 
+
+DevOps 
+
+	1. Communication
+	2. Collaboration
+	3. Automation
+
+Operations Team 
+
+Infra 
+Deployments 
+Monitoring 
+Back up 
+
+Faster Delivery 
+Higher Quality 
+Lesser Spending 
+Automation is 
