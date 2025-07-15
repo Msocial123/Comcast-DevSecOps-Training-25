@@ -1,0 +1,5 @@
+apt  install docker.io -y
+docker --version
+service docker status
+
+docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
