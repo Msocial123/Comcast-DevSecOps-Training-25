@@ -3,3 +3,28 @@ docker --version
 service docker status
 
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+
+
+pipeline {
+    agent any
+    
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('git checkout') {
+            steps {
+                git 'https://github.com/Msocial123/Retail-App_kubernetes.git'
+            }
+        }
+        
+        stage('sonarqube analysis'){
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh '$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=code-quality-app -Dsonar.projectName=code-quality-app'
+                  }
+            }
+        }
+    }
+}
