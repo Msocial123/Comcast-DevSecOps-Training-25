@@ -13,10 +13,24 @@ pipeline {
                 script{
                 withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
                   sh 'docker build -t ipl-app:v1 .'
+                  sh 'docker tag ipl-app:v1 muralisocial123/ipl-app:v1'
+                  sh 'docker push muralisocial123/ipl-app:v1'
                   }
             }
             }    
         }
+        stage('deploy to container'){
+            steps{
+                sh 'docker run -d --name ipl -p 3000:3000 muralisocial123/ipl-app:v1'
+            }
+        }
         
     }
 }
+
+
+# docker permission denied error 
+
+sudo usermod -aG docker ubuntu
+newgrp docker
+sudo chmod 777 /var/run/docker.sock
