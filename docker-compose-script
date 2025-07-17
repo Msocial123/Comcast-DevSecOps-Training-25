@@ -1,0 +1,22 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+                git 'https://github.com/Msocial123/IPL-Project-Deployment.git'
+            }
+        }
+        
+        stage('docker build & push'){
+            steps{
+                script{
+                withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                   sh 'docker-compose up -d'
+                  }
+            }
+            }    
+        }
+        
+    }
+}
