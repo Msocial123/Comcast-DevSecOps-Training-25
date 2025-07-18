@@ -1,0 +1,117 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'VERSION', defaultValue: 'latest', description: 'Enter the APP VERSION')
+    }
+
+    environment {
+        VERSION = "${params.VERSION ?: 'latest'}"
+        DOCKER_IMAGE = "devsecops-example-app:${VERSION}"
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_REGISTRY_CREDENTIALS = 'docker-cred'
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                echo '🔁 Cloning the GitHub repository...'
+                git url: 'https://github.com/Msocial123/fss-Retail-App_kubernetes.git', branch: 'master'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo "🐳 Building Docker image ${DOCKER_IMAGE}..."
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
+        stage("OWASP Dependency Check") {
+            steps {
+                echo "🔍 Running OWASP Dependency Check..."
+                withEnv(["NVD_API_KEY=db527c43-09fa-4430-8f3f-c8c315cfe2f6"]) {
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'dc'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+    } 
+        stage('Trivy Image Scan') {
+            steps {
+                echo "🔍 Scanning Docker image with Trivy..."
+                sh '''
+                    trivy image --format table --severity HIGH,CRITICAL --no-progress ${DOCKER_IMAGE} > trivy-scan.txt || true
+
+                    echo "========== Trivy Vulnerability Summary =========="
+                    cat trivy-scan.txt
+
+                    HIGH_COUNT=$(grep -c 'HIGH' trivy-scan.txt || true)
+                    CRITICAL_COUNT=$(grep -c 'CRITICAL' trivy-scan.txt || true)
+
+                    echo "📋 Found $HIGH_COUNT HIGH and $CRITICAL_COUNT Critical vulnerabilities."
+                '''
+                archiveArtifacts artifacts: 'trivy-scan.txt', onlyIfSuccessful: true
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    echo "📤 Pushing Docker image to Docker Hub..."
+                    sh """
+                        docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+                        docker tag ${DOCKER_IMAGE} muralisocial123/${DOCKER_IMAGE}
+                        docker push muralisocial123/${DOCKER_IMAGE}
+                    """
+                }
+            }
+        }
+
+        stage('Run Docker Compose') {
+            steps {
+                echo "🚀 Starting containers using Docker Compose..."
+                sh "docker-compose up -d"
+            }
+            post {
+                success {
+                    echo "✅ Docker containers started successfully."
+                }
+                failure {
+                    echo "❌ Failed to start Docker containers."
+                }
+            }
+        }
+
+        stage('ZAP DAST Scan') {
+            steps {
+                echo "🔍 Starting ZAP scan..."
+                sh '''
+                    mkdir -p zap-output
+                    chmod 777 zap-output
+                    docker run --rm \
+                    -v $PWD/zap-output:/zap/wrk \
+                    -t zaproxy/zap-stable \
+                    zap-baseline.py \
+                    -t http://54.233.48.33:3130/ \
+                    -r zap-report.html \
+                    -J zap-report.json || true
+                '''
+                archiveArtifacts artifacts: 'zap-output/zap-report.*', allowEmptyArchive: true
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                echo "🧹 Cleaning up Docker resources..."
+                sh "docker system prune -af"
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "🧼 Final cleanup..."
+            cleanWs()
+        }
+    }
+}
